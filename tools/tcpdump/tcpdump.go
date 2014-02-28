@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-
-	"github.com/miekg/pcap"
+	"github.com/kyleconroy/pcap"
 )
 
 const (

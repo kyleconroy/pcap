@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/dustin/gopcap"
+	"github.com/kylecnroy/pcap"
 )
 
 var input *string = flag.String("input", "", "input file")
