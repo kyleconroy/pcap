@@ -16,9 +16,10 @@ type PacketTime struct {
 // Packet is a single packet parsed from a pcap file.
 type Packet struct {
 	// porting from 'pcap_pkthdr' struct
-	Time   time.Time // packet send/receive time
-	Caplen uint32    // bytes stored in the file (caplen <= len)
-	Len    uint32    // bytes sent/received
+	Time     time.Time // packet send/receive time
+	Caplen   uint32    // bytes stored in the file (caplen <= len)
+	Len      uint32    // bytes sent/received
+	DataLink int       // datalink type of interface
 
 	Data []byte // packet data
 
@@ -33,7 +34,12 @@ type Packet struct {
 // Decode decodes the headers of a Packet.
 func (p *Packet) Decode() {
 
-	p.Type = int(binary.BigEndian.Uint16(p.Data[12:14]))
+	if p.DataLink == LINKTYPE_NULL {
+		// FIXME Look at the PF values (I guess??)
+		p.Type = TYPE_IP
+	} else {
+		p.Type = int(binary.BigEndian.Uint16(p.Data[12:14]))
+	}
 	p.DestMac = decodemac(p.Data[0:6])
 	p.SrcMac = decodemac(p.Data[6:12])
 	p.Payload = p.Data[14:]

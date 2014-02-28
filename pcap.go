@@ -31,7 +31,8 @@ import (
 )
 
 type Pcap struct {
-	cptr *C.pcap_t
+	cptr     *C.pcap_t
+	datalink int
 }
 
 type PcapDumper struct {
@@ -150,6 +151,8 @@ func OpenLive(device string, snaplen int32, promisc bool, timeout_ms int32) (han
 	} else {
 		handle = h
 	}
+
+	handle.datalink = handle.Datalink()
 	C.free(unsafe.Pointer(buf))
 	return
 }
@@ -198,10 +201,12 @@ func (p *Pcap) NextEx() (pkt *Packet, result int32) {
 	pkt.Caplen = uint32(pkthdr.caplen)
 	pkt.Len = uint32(pkthdr.len)
 	pkt.Data = make([]byte, pkthdr.caplen)
+	pkt.DataLink = p.datalink
 
 	for i := uint32(0); i < pkt.Caplen; i++ {
 		pkt.Data[i] = *(*byte)(unsafe.Pointer(uintptr(buf) + uintptr(i)))
 	}
+
 	return
 }
 
@@ -236,18 +241,18 @@ func (p *Pcap) SetFilter(expr string) (err error) {
 }
 
 func (p *Pcap) SetDirection(direction string) (err error) {
-    var pcap_direction C.pcap_direction_t
-    if (direction == "in") {
-        pcap_direction = C.PCAP_D_IN
-    } else if (direction == "out") {
-        pcap_direction = C.PCAP_D_OUT
-    } else {
-        pcap_direction = C.PCAP_D_INOUT
-    }
-    if -1 == C.pcap_setdirection(p.cptr, pcap_direction) {
-        return p.Geterror()
-    }
-    return nil
+	var pcap_direction C.pcap_direction_t
+	if direction == "in" {
+		pcap_direction = C.PCAP_D_IN
+	} else if direction == "out" {
+		pcap_direction = C.PCAP_D_OUT
+	} else {
+		pcap_direction = C.PCAP_D_INOUT
+	}
+	if -1 == C.pcap_setdirection(p.cptr, pcap_direction) {
+		return p.Geterror()
+	}
+	return nil
 }
 
 func (p *Pcap) SetDataLink(dlt int) error {
